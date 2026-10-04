@@ -1,9 +1,12 @@
 """Chat pipeline tests: grounded answers, fallback, memory, sessions.
 
-The LLM is the FakeListChatModel (KB_LLM_PROVIDER=fake) so these run
+The LLM is the FakeListChatModel (LLM_PROVIDER=fake) so these run
 hermetically - they verify the pipeline wiring, retrieval, fallback and
-persistence rather than the language quality.
+persistence rather than the language quality. LLM refusal and API-error
+paths are exercised with small patches instead of a live model.
 """
+from unittest import mock
+
 from app.services import memory
 
 
@@ -22,16 +25,54 @@ def test_ask_in_scope_question(client, user_headers):
 
 
 def test_ask_out_of_scope_gives_fallback(client, user_headers):
-    response = client.post(
-        "/api/chat/ask",
-        headers=user_headers,
-        json={"message": "What is the airspeed velocity of an unladen swallow on Mars?"},
-    )
+    """Nothing relevant found -> the retrieval floor short-circuits to the fallback."""
+    from app.services import chatbot as cb
+
+    with mock.patch.object(cb.vector_store, "search", return_value=[]):
+        response = client.post(
+            "/api/chat/ask",
+            headers=user_headers,
+            json={"message": "What is the airspeed velocity of an unladen swallow on Mars?"},
+        )
     assert response.status_code == 200
     body = response.json()
     assert body["in_scope"] is False
     assert "knowledge base" in body["answer"].lower()
     assert body["sources"] == []
+
+
+def test_llm_refusal_becomes_graceful_fallback(client, user_headers):
+    """The LLM says the context lacks the answer -> polite fallback (no hallucination)."""
+    from app.services import chatbot as cb
+
+    with mock.patch.object(cb.rag, "generate_answer", return_value=None):
+        response = client.post(
+            "/api/chat/ask",
+            headers=user_headers,
+            json={"message": "How many floors does the library building have?"},
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["in_scope"] is False
+    assert body["kind"] == "fallback"
+    assert body["sources"] == []
+
+
+def test_llm_api_error_is_handled_gracefully(client, user_headers):
+    """A 429/network error must become a friendly message, not a 500 crash."""
+    from app.services import chatbot as cb
+
+    with mock.patch.object(cb.rag, "generate_answer", side_effect=RuntimeError("429 quota")):
+        response = client.post(
+            "/api/chat/ask",
+            headers=user_headers,
+            json={"message": "When was Alpha Valley University founded?"},
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["kind"] == "llm_error"
+    assert "temporarily unavailable" in body["answer"]
+    assert body["sources"], "retrieved sources are still shown for transparency"
 
 
 def test_greeting_is_canned(client, user_headers):

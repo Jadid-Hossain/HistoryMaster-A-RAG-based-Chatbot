@@ -145,12 +145,17 @@ cd frontend && npm install && npm run build   # -> frontend/dist, served by Fast
 
 ---
 
-## 🧪 Tests
+## 🧪 Tests & live evaluation
 
 ```bash
 cd backend
-python -m pytest            # hermetic: fake LLM, isolated temp DB, real Chroma + embeddings
+python -m pytest                 # hermetic: fake LLM, isolated temp DB, real Chroma + embeddings
+python scripts/eval_chat.py      # live: 20-question accuracy report -> docs/EVAL_RESULTS.md
 ```
+
+**Latest live evaluation (Gemini `gemini-flash-lite-latest`): 20/20 passed** —
+16 grounded factoid/list answers correct, 3 out-of-scope questions answered with the
+polite fallback, 1 greeting handled. See [`docs/EVAL_RESULTS.md`](docs/EVAL_RESULTS.md).
 
 Covers auth & roles, KB upload/delete/URL-ingest, incremental updates, grounded answers,
 out-of-scope fallback, session memory, ownership rules, and API health. GitHub Actions runs
@@ -197,9 +202,9 @@ KnowBot/
 |----------|---------|---------|
 | `GEMINI_API_KEY` | — | LLM API key (or `OPENAI_API_KEY` / `GROQ_API_KEY` / …) |
 | `LLM_PROVIDER` | `auto` | `auto` picks the first key present; or force `gemini` / `openai` / `groq` / `deepseek` |
-| `LLM_MODEL` | provider default | e.g. `gemini-2.5-flash`, `gemini-2.5-pro` |
+| `LLM_MODEL` | `gemini-flash-lite-latest` | e.g. `gemini-3.8-flash` (smarter, but free tier = 20 req/day), `gemini-3.5-flash-lite` |
 | `EMBEDDINGS_PROVIDER` | `local` | `local` (offline MiniLM) or `gemini` (API embeddings) |
-| `RETRIEVAL_TOP_K` / `RETRIEVAL_FLOOR` | 5 / 0.30 | chunks fetched / minimum cosine similarity to answer |
+| `RETRIEVAL_TOP_K` / `RETRIEVAL_FLOOR` | 5 / 0.15 | chunks fetched / cheap pre-filter floor (precise guard is the LLM `NOT_IN_KB` contract) |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | 1000 / 150 | splitter settings |
 
 ## 📌 Notes for the viva

@@ -156,7 +156,31 @@ def answer_question(question: str, history: list[dict] | None = None) -> dict:
 
     # 3. grounded generation ---------------------------------------------
     documents = [doc for doc, _score in results]
-    generated = rag.generate_answer(question, documents)
+    try:
+        generated = rag.generate_answer(question, documents)
+    except Exception as exc:
+        # Rate limits / network problems must never crash a chat response.
+        log.error("LLM call failed: %s", exc)
+        result = {
+            "answer": (
+                "I found relevant information in my knowledge base, but the AI service "
+                "is temporarily unavailable (rate limit or network issue). Please try "
+                "again in a moment."
+            ),
+            "sources": [
+                {
+                    "document": doc.metadata.get("filename", "unknown"),
+                    "snippet": doc.page_content[:280] + ("..." if len(doc.page_content) > 280 else ""),
+                    "retrieval_score": round(score, 4),
+                }
+                for doc, score in results[:3]
+            ],
+            "confidence": round(results[0][1], 4),
+            "in_scope": False,
+            "kind": "llm_error",
+            "latency_ms": int((time.perf_counter() - started) * 1000),
+        }
+        return result
     if generated is None:
         # Retrieved something related, but the LLM confirms the facts are absent.
         result = _fallback()

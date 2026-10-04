@@ -86,10 +86,12 @@ def main() -> int:
         print(f"{WARN} Skipping live LLM test (no key).")
     else:
         try:
+            from app.services.rag import extract_text
+
             llm_service.load()
             started = time.time()
             response = llm_service.get().invoke("Reply with exactly one word: OK")
-            text = (response.content or "").strip()
+            text = extract_text(response).strip()
             if text:
                 print(f"{OK} Live LLM call succeeded in {time.time() - started:.1f}s "
                       f"(model={llm_service.model_name}, reply={text!r}).")

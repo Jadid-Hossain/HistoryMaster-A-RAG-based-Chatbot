@@ -55,7 +55,7 @@ LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.1"))
 LLM_MAX_OUTPUT_TOKENS = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "1024"))
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "")      # for OpenAI-compatible APIs
 
-GEMINI_MODEL_DEFAULT = "gemini-2.5-flash"
+GEMINI_MODEL_DEFAULT = "gemini-flash-lite-latest"
 OPENAI_MODEL_DEFAULT = "gpt-4o-mini"
 GROQ_MODEL_DEFAULT = "llama-3.3-70b-versatile"
 OPENROUTER_MODEL_DEFAULT = "openai/gpt-4o-mini"
@@ -70,8 +70,10 @@ CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))         # characters per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 150))    # character overlap
 RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", 5))
 
-# Below this cosine similarity the bot answers "not in my knowledge base".
-RETRIEVAL_FLOOR = float(os.getenv("RETRIEVAL_FLOOR", 0.30))
+# Cheap pre-filter only: below this cosine similarity the bot skips the LLM and
+# answers "not in my knowledge base" directly. The precise guard is the LLM's
+# NOT_IN_KB contract, so this floor stays low to not miss short entity questions.
+RETRIEVAL_FLOOR = float(os.getenv("RETRIEVAL_FLOOR", 0.15))
 
 MEMORY_WINDOW = int(os.getenv("MEMORY_WINDOW", 6))      # recent messages kept as context
 

@@ -77,6 +77,14 @@ match %) and ⚡ latency — proof that answers come from the knowledge base, no
 | Symptom | Fix |
 |---------|-----|
 | "LLM is not configured" | `.env` key missing/typo → fix → restart backend |
-| 429 / quota errors on Gemini | wait a minute (free tier rate limit); or switch model in `.env` (`LLM_MODEL=gemini-2.0-flash`) |
+| "temporarily unavailable" answer | free-tier quota hit → the bot answers politely; wait for reset, or switch `LLM_MODEL` in `.env` (e.g. `gemini-3.5-flash-lite`) → restart |
+| Backend won't start | `python scripts/check_setup.py` and read the report |
+| Old answers | `python scripts/seed_kb.py --reset` then restart |
+
+> **Free-tier quota tip:** the current default model `gemini-flash-lite-latest` has the most
+> generous free daily limit. Bigger models like `gemini-3.8-flash` allow only ~20 requests/day
+> free - plenty for a 10-minute demo, but don't run the eval script with that model on demo day.
+> Note: the bot never crashes on quota errors - it replies with a polite
+> "temporarily unavailable" message and still shows the retrieved sources.
 | Backend won't start | `python scripts/check_setup.py` and read the report |
 | Old answers | `python scripts/seed_kb.py --reset` then restart |

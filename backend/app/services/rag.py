@@ -41,6 +41,26 @@ _REFUSAL_PATTERN = re.compile(
 )
 
 
+def extract_text(response) -> str:
+    """Normalize an LLM response to plain text.
+
+    Depending on the model/SDK version, `response.content` is either a string
+    or a list of content blocks like [{"type": "text", "text": "..."}].
+    """
+    content = getattr(response, "content", "")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and isinstance(block.get("text"), str):
+                parts.append(block["text"])
+        return "".join(parts)
+    return str(content or "")
+
+
 def generate_answer(question: str, documents: list) -> dict | None:
     """Generate an answer grounded in the retrieved documents.
 
@@ -55,7 +75,7 @@ def generate_answer(question: str, documents: list) -> dict | None:
     )
     prompt = USER_PROMPT_TEMPLATE.format(context=context, question=question)
     response = llm_service.get().invoke(prompt)
-    text = (response.content or "").strip()
+    text = extract_text(response).strip()
     # Strip possible markdown fences the model might add.
     if text.startswith("```"):
         text = text.strip("`\n")
