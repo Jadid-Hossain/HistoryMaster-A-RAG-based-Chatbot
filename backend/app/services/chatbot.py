@@ -211,13 +211,10 @@ def answer_question(question: str, history: list[dict] | None = None) -> dict:
 
 
 def suggested_questions() -> list[str]:
-    return [
-        "When was Greenfield University founded?",
-        "Who is the head of the CSE department?",
-        "What is the tuition fee for CSE?",
-        "How many books can I borrow from the library?",
-        "What are the names of the hostels?",
-        "What topics are covered in the Machine Learning course?",
-        "What scholarships are available?",
-        "When are the final examinations?",
-    ]
+    """Starter chips for the UI.
+
+    Kept empty on purpose: questions should match whatever knowledge base the
+    admin loads (drop a PDF into backend/knowledge_base/ and re-seed), never a
+    hardcoded sample. The welcome screen simply hides the chips when empty.
+    """
+    return []

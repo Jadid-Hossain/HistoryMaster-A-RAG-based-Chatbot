@@ -1,8 +1,8 @@
 # 🤖 KnowBot — AI Knowledge-Base Chatbot (RAG)
 
 A production-style **RAG (Retrieval-Augmented Generation) chatbot** that answers questions
-**strictly from a custom knowledge base** (a big PDF handbook + documents in many formats),
-politely refuses anything outside it, and shows **sources + match scores** for every answer.
+**strictly from a custom knowledge base** (your PDF / documents), politely refuses anything
+outside it, and shows **sources + match scores** for every answer.
 
 > Final Project 1 — "AI-powered chatbot with knowledge handling capabilities"
 > Built with **FastAPI + LangChain + ChromaDB + Google Gemini** on the backend and
@@ -35,7 +35,8 @@ politely refuses anything outside it, and shows **sources + match scores** for e
 **Why it can't hallucinate:** the LLM receives *only* the retrieved knowledge-base chunks and is
 instructed to reply `NOT_IN_KB` when the context lacks the answer — that reply is converted to a
 graceful "not found in knowledge base" message. A similarity floor rejects unrelated questions
-before the LLM is even called.
+before the LLM is even called. **Ask anything outside your PDF → the bot honestly says it
+doesn't know.**
 
 ---
 
@@ -45,8 +46,8 @@ before the LLM is even called.
 
 | # | Requirement | Where |
 |---|-------------|-------|
-| 1 | Trainable on a custom, medium-size knowledge base | Admin panel upload / `scripts/seed_kb.py` — the 14-page sample PDF + 12 docs → ~90 chunks indexed into Chroma |
-| 2 | Responds accurately **using only** the knowledge base | `app/services/rag.py` — grounded prompt + `NOT_IN_KB` contract + retrieval floor |
+| 1 | Trainable on a custom, medium-size knowledge base | Drop your PDF into `backend/knowledge_base/` → `python scripts/seed_kb.py --reset` (or upload from the Admin Panel). LangChain splits it into chunks and embeds them into Chroma |
+| 2 | Responds accurately **using only** the knowledge base | `app/services/rag.py` — grounded prompt + `NOT_IN_KB` contract |
 | 3 | Graceful handling of out-of-scope questions | `app/services/chatbot.py::_fallback` — polite "not found in my knowledge base" + rephrasing suggestion |
 
 ### Additional features (good to have)
@@ -68,7 +69,7 @@ before the LLM is even called.
 | 1 | Complete frontend chat interface | React + Vite app (`frontend/`) — login, chat with sources, admin panel |
 | 2 | Backend for queries / KB / responses | FastAPI (`backend/app/`) |
 | 3 | Clean API-based architecture | Frontend ⇄ REST ⇄ backend, OpenAPI documented |
-| 4 | Maintained on GitHub | Repo root here — commit history + GitHub Actions CI (`.github/workflows/tests.yml`) |
+| 4 | Maintained on GitHub | Commit history + GitHub Actions CI (`.github/workflows/tests.yml`) |
 
 ---
 
@@ -80,7 +81,7 @@ before the LLM is even called.
 
 ### 1. Configure the LLM key
 
-Copy `.env.example` to `.env` (already created) and paste your key:
+`.env` at the project root:
 
 ```env
 GEMINI_API_KEY=AIza...your_key_here
@@ -95,13 +96,23 @@ python -m venv ../venv                      # (skip if venv/ already exists)
 pip install -r requirements.txt
 
 python scripts/download_models.py           # one-time: local embedding model (~90 MB)
-python scripts/make_sample_kb.py            # one-time: generates the sample PDF/DOCX files
-python scripts/seed_kb.py                   # load the sample knowledge base into Chroma
-
 python scripts/check_setup.py               # ✅ verifies key + models + DB + a live LLM call
 ```
 
-### 3. Run
+### 3. Load YOUR knowledge base
+
+```bash
+# drop your PDF into backend/knowledge_base/ then:
+python scripts/seed_kb.py --reset           # wipes any old knowledge, loads ONLY your file(s)
+
+# or point at any file directly:
+python scripts/seed_kb.py --reset "C:\path\to\my_document.pdf"
+```
+
+(Admins can also upload/delete documents live from the web Admin Panel — updates are
+instant, no retraining.)
+
+### 4. Run
 
 **One-click demo (Windows):** double-click **`run_demo.bat`** — builds the frontend, starts the
 backend, and opens **http://localhost:8000**.
@@ -120,7 +131,7 @@ cd frontend && npm install && npm run dev    # http://localhost:5173
 - **API docs (Swagger):** http://localhost:8000/docs
 - **Demo accounts:** `admin / admin123` (admin) · `user / user123` (regular user)
 
-### 4. Frontend production build
+### 5. Frontend production build
 
 ```bash
 cd frontend && npm install && npm run build   # -> frontend/dist, served by FastAPI automatically
@@ -128,38 +139,27 @@ cd frontend && npm install && npm run build   # -> frontend/dist, served by Fast
 
 ---
 
-## 🎤 10-minute live demo script
+## 🎤 Live demo flow (details in [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md))
 
-1. **Login page** → sign in as `user/user123`. Point out the auth requirement.
-2. Ask a KB question: *"When was Greenfield University founded?"* → **1998**, with **sources** (handbook PDF) and a match score shown under the answer.
-3. Factoid questions: *"Who is the head of the CSE department?"*, *"What is the tuition fee for CSE?"*, *"How many books can I borrow from the library?"*
-4. List question: *"What topics are covered in the Machine Learning course?"*
-5. **Memory:** *"What scholarships are available?"* → then *"Tell me more about the Chancellor one"* (follow-up resolved via short-term memory).
-6. **Out-of-scope:** *"Who will win the next World Cup?"* → polite *"not found in my knowledge base"* fallback — no hallucination.
-7. **Admin live update (no retraining):** logout → login `admin/admin123` → Admin Panel → upload any new `.txt` file (e.g. `knowledge_base/09_sports_clubs.txt` after removing it, or your own) → back to chat → ask about it **immediately**. Emphasize: *new vectors appended — the LLM was never retrained.*
-8. **Multi-format:** show the documents table — a 14-page PDF handbook, DOCX, HTML news page.
-9. **API docs:** open `/docs` — every endpoint documented; execute a request live.
-10. **Logs:** show `backend/logs/app.log` — each request, retrieval score and answer is logged.
-
-*(Full walkthrough with expected answers: [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md))*
+1. **Login** as `user/user123` — auth required.
+2. Ask a fact **from your PDF** → correct answer with **📚 Sources + match %**.
+3. Ask a follow-up (*"tell me more about that"*) → short-term **memory** resolves it.
+4. Ask something **not in the PDF** (*"Who will win the World Cup?"*) → polite **fallback**, no hallucination.
+5. **Admin live update:** upload a new file → ask about it **immediately** — no retraining.
+6. Show **/docs** (Swagger) and **backend/logs/app.log**.
 
 ---
 
-## 🧪 Tests & live evaluation
+## 🧪 Tests
 
 ```bash
 cd backend
-python -m pytest                 # hermetic: fake LLM, isolated temp DB, real Chroma + embeddings
-python scripts/eval_chat.py      # live: 20-question accuracy report -> docs/EVAL_RESULTS.md
+python -m pytest    # hermetic: fake LLM, isolated temp DB, real Chroma + embeddings
 ```
 
-**Latest live evaluation (Gemini `gemini-flash-lite-latest`): 20/20 passed** —
-16 grounded factoid/list answers correct, 3 out-of-scope questions answered with the
-polite fallback, 1 greeting handled. See [`docs/EVAL_RESULTS.md`](docs/EVAL_RESULTS.md).
-
 Covers auth & roles, KB upload/delete/URL-ingest, incremental updates, grounded answers,
-out-of-scope fallback, session memory, ownership rules, and API health. GitHub Actions runs
-the same suite on every push.
+LLM-refusal → fallback, API-error → graceful message, session memory, ownership rules, and
+API health. GitHub Actions runs the same suite on every push.
 
 ---
 
@@ -183,13 +183,13 @@ KnowBot/
 │   │       ├── rag.py            # grounded prompt + NOT_IN_KB contract
 │   │       ├── memory.py         # short-term conversation memory
 │   │       └── chatbot.py        # pipeline orchestrator + fallback
-│   ├── knowledge_base/           # sample KB: big PDF handbook + 12 docs
-│   ├── scripts/                  # seed_kb, check_setup, download_models, make_sample_kb
+│   ├── knowledge_base/           # ← put YOUR PDF(s) here, then run seed_kb.py
+│   ├── scripts/                  # seed_kb, check_setup, download_models, eval_chat
 │   ├── tests/                    # pytest suite (hermetic)
 │   └── data/                     # runtime: SQLite DB, Chroma store, uploads (git-ignored)
 ├── frontend/
 │   └── src/                      # React: Login, Chat, Admin pages + dark UI
-├── docs/                         # DEMO_GUIDE.md, architecture notes
+├── docs/                         # DEMO_GUIDE.md
 ├── .env                          # ← your API key (git-ignored)
 ├── .env.example
 ├── run_demo.bat                  # one-click demo launcher (Windows)

@@ -160,7 +160,8 @@ def test_capabilities_endpoint(client, user_headers):
     assert response.status_code == 200
     body = response.json()
     assert body["num_documents"] >= 2
-    assert body["suggested_questions"]
+    # Suggestions are KB-specific and empty unless the loaded KB defines them.
+    assert isinstance(body["suggested_questions"], list)
 
 
 def test_health_endpoint(client):
