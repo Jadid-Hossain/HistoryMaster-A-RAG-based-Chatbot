@@ -21,7 +21,7 @@ from ..config import (
 )
 from ..logger import get_logger
 
-log = get_logger("knowbot.llm")
+log = get_logger("historymaster.llm")
 
 PROVIDER_KEY_VARS = {
     "gemini": "GEMINI_API_KEY",

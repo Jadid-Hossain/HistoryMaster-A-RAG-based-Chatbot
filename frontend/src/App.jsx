@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { getStoredUser, fetchHealth } from './api.js'
+import { getStoredUser } from './api.js'
 import Login from './pages/Login.jsx'
 import Chat from './pages/Chat.jsx'
 import Admin from './pages/Admin.jsx'
 
 export default function App() {
   const [user, setUser] = useState(getStoredUser())
-  const [health, setHealth] = useState(null)
-
-  useEffect(() => {
-    fetchHealth().then(setHealth).catch(() => setHealth(null))
-  }, [])
 
   const requireAuth = (element) =>
     user ? element : <Navigate to="/login" replace />
@@ -23,7 +18,7 @@ export default function App() {
           path="/login"
           element={user ? <Navigate to="/chat" replace /> : <Login onLogin={setUser} />}
         />
-        <Route path="/chat" element={requireAuth(<Chat user={user} onLogout={() => setUser(null)} health={health} />)} />
+        <Route path="/chat" element={requireAuth(<Chat user={user} onLogout={() => setUser(null)} />)} />
         <Route
           path="/admin"
           element={requireAuth(

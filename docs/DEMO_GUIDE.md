@@ -1,4 +1,4 @@
-# 🎤 KnowBot — Live Demo Guide (10 minutes)
+# 🎤 History Master — Live Demo Guide (10 minutes)
 
 The chatbot answers **only from the knowledge base you load** (your PDF).
 Anything outside it gets an honest *"not found in my knowledge base"* — never a made-up answer.

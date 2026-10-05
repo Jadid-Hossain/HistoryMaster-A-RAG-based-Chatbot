@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ask, fetchSessions, fetchMessages, deleteSession, fetchCapabilities, clearSession, fetchHealth,
+  ask, fetchSessions, fetchMessages, deleteSession, fetchCapabilities, clearSession,
 } from '../api.js'
 
 let nextTempId = -1
 
-export default function Chat({ user, onLogout, health }) {
+// Minimal, safe markdown-ish rendering: **bold**, *italic*, `code`.
+function renderFormatted(text) {
+  const escaped = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  return escaped
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+}
+
+export default function Chat({ user, onLogout }) {
   const navigate = useNavigate()
   const [sessions, setSessions] = useState([])
   const [activeSession, setActiveSession] = useState(null)
@@ -98,19 +110,13 @@ export default function Chat({ user, onLogout, health }) {
     onLogout()
   }
 
-  const kbInfo = health
-    ? `${health.vector_db_chunks ?? 0} chunks · ${health.llm_provider ?? '…'}${health.llm_model ? ` (${health.llm_model})` : ''}`
-    : 'connecting…'
-
   return (
     <div className="chat-layout">
       {/* ---------------------------------------------------- sidebar -- */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <span>🤖</span>
           <div>
-            <strong>KnowBot</strong>
-            <small>{kbInfo}</small>
+            <strong>History Master</strong>
           </div>
         </div>
 
@@ -151,15 +157,13 @@ export default function Chat({ user, onLogout, health }) {
       <main className="chat-main">
         <header className="chat-header">
           <h2>{activeSession ? sessions.find((s) => s.id === activeSession)?.title || 'Conversation' : 'New conversation'}</h2>
-          <span className="badge">RAG · answers grounded in the knowledge base</span>
         </header>
 
         <div className="messages" id="messages">
           {messages.length === 0 && !sending && (
             <div className="welcome">
-              <div className="welcome-icon">🤖</div>
-              <h3>Hi {user?.username}! Ask me anything about my knowledge base.</h3>
-              <p>I answer strictly from the uploaded documents — if something is not there, I'll say so honestly.</p>
+              <h3>Hi {user?.username}! Ask me anything about the history of Bangladesh.</h3>
+              <p>I answer strictly from the book in my knowledge base — if something is not there, I'll tell you honestly.</p>
               <div className="suggestion-grid">
                 {suggestions.map((q) => (
                   <button key={q} className="suggestion" onClick={(e) => send(e, q)}>
@@ -178,7 +182,10 @@ export default function Chat({ user, onLogout, health }) {
             ) : (
               <div key={m.id} className="row bot-row-msg">
                 <div className={`bubble bot ${m.in_scope === false ? 'fallback' : ''}`}>
-                  <div className="bubble-text">{m.content}</div>
+                  <div
+                    className="bubble-text"
+                    dangerouslySetInnerHTML={{ __html: renderFormatted(m.content) }}
+                  />
                   {m.sources?.length > 0 && (
                     <div className="sources">
                       <div className="sources-label">📚 Sources</div>
@@ -222,7 +229,7 @@ export default function Chat({ user, onLogout, health }) {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question about the knowledge base…"
+            placeholder="Ask anything about the history of Bangladesh…"
             disabled={sending}
             autoFocus
           />

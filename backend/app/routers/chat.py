@@ -10,7 +10,7 @@ from ..security import get_current_user
 from ..services import chatbot, memory
 
 router = APIRouter()
-log = get_logger("knowbot.chat")
+log = get_logger("historymaster.chat")
 
 
 class AskRequest(BaseModel):

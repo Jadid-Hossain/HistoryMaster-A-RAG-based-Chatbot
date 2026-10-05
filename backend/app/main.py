@@ -1,4 +1,4 @@
-"""KnowBot FastAPI application entry point.
+"""History Master FastAPI application entry point.
 
 A RAG (Retrieval-Augmented Generation) chatbot:
   LangChain loaders -> Chroma vector DB -> Gemini LLM (API key from .env)
@@ -24,7 +24,7 @@ from .services.embeddings import embedder
 from .services.llm import llm_service
 from .services.vectorstore import vector_store
 
-log = get_logger("knowbot.app")
+log = get_logger("historymaster.app")
 
 DESCRIPTION = """
 Knowledge-base chatbot API built on a **RAG (Retrieval-Augmented Generation)** pipeline:
@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         log.error("LLM configuration error: %s", exc)
     log.info(
-        "KnowBot ready: %d documents, %d chunks in Chroma, LLM=%s.",
+        "History Master ready: %d documents, %d chunks in Chroma, LLM=%s.",
         len(database.query("SELECT id FROM documents")),
         vector_store.count(),
         llm_service.provider or "NOT CONFIGURED",
@@ -82,7 +82,7 @@ def _seed_default_users() -> None:
 
 
 app = FastAPI(
-    title="KnowBot API",
+    title="History Master API",
     version="2.0.0",
     description=DESCRIPTION,
     lifespan=lifespan,

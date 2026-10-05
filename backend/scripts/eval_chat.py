@@ -89,7 +89,7 @@ def main() -> int:
 
     out = BACKEND_DIR.parent / "docs" / "EVAL_RESULTS.md"
     with out.open("w", encoding="utf-8") as f:
-        f.write("# KnowBot RAG evaluation results\n\n")
+        f.write("# History Master RAG evaluation results\n\n")
         f.write(f"- LLM: `{llm_service.provider}/{llm_service.model_name}`\n")
         f.write(f"- Knowledge base: {vector_store.count()} chunks\n")
         f.write(f"- Score: **{passed}/{len(cases)}**\n\n")

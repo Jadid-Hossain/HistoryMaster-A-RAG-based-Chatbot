@@ -61,7 +61,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         elapsed_ms = (time.perf_counter() - started) * 1000
         if request.url.path.startswith("/api"):
-            get_logger("knowbot.http").info(
+            get_logger("historymaster.http").info(
                 '%s "%s" %s %.0fms',
                 request.method,
                 request.url.path,

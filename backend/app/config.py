@@ -1,4 +1,4 @@
-"""Central configuration for KnowBot backend.
+"""Central configuration for History Master backend.
 
 Reads .env (project root or backend/) for secrets and knobs:
   GEMINI_API_KEY / OPENAI_API_KEY / GROQ_API_KEY ...  -> LLM credentials
@@ -11,7 +11,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent      # backend/
-PROJECT_ROOT = BASE_DIR.parent                          # KnowBot/
+PROJECT_ROOT = BASE_DIR.parent                          # HistoryMaster/
 
 # .env lives at the project root; backend/.env also accepted.
 load_dotenv(PROJECT_ROOT / ".env")
@@ -68,7 +68,7 @@ GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedd
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))         # characters per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 150))    # character overlap
-RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", 5))
+RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", 12))
 
 # Cheap pre-filter only: below this cosine similarity the bot skips the LLM and
 # answers "not in my knowledge base" directly. The precise guard is the LLM's

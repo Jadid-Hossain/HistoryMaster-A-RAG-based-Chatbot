@@ -92,7 +92,6 @@ export default function Admin({ user, onLogout }) {
     <div className="admin-layout">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <span>🛡</span>
           <div><strong>Admin Panel</strong><small>Knowledge base control</small></div>
         </div>
         <button className="btn primary full" onClick={() => navigate('/chat')}>💬 Back to Chat</button>

@@ -35,9 +35,8 @@ export default function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-logo">
-          <span className="logo-emoji">🤖</span>
-          <h1>KnowBot</h1>
-          <p className="tagline">RAG-powered Knowledge Base Chatbot</p>
+          <h1>History Master</h1>
+          <p className="tagline">Ask anything about the history of Bangladesh</p>
         </div>
 
         <div className="mode-tabs">
@@ -108,7 +107,7 @@ export default function Login({ onLogin }) {
           </div>
         )}
       </div>
-      <p className="login-footer">Retrieval-Augmented Generation · Chroma Vector DB · Gemini LLM</p>
+      <p className="login-footer">Answers grounded in the knowledge base · Powered by Gemini</p>
     </div>
   )
 }

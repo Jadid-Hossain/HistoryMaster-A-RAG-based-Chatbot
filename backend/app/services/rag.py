@@ -1,27 +1,25 @@
 """Grounded answer generation: the 'G' of RAG.
 
-The LLM receives ONLY the retrieved chunks as context and is instructed to
-answer strictly from them, replying NOT_IN_KB when the context is missing
-the answer. That output is mapped to the polite fallback, so the bot never
-invents facts beyond the knowledge base.
+The LLM receives ONLY the retrieved chunks as context. It must answer from
+them when they contain anything relevant and reply with the single token
+NOT_IN_KB only when they contain nothing relevant - that marker is mapped
+to the polite fallback, so the bot never invents facts beyond the
+knowledge base.
 """
 import re
 
 from ..logger import get_logger
 from .llm import llm_service
 
-log = get_logger("knowbot.rag")
+log = get_logger("historymaster.rag")
 
-SYSTEM_PROMPT = """You are KnowBot, a precise knowledge-base assistant.
+SYSTEM_PROMPT = """You are History Master, a precise assistant that answers questions about the history of Bangladesh.
 
 Rules you must always follow:
-1. Answer ONLY using facts contained in the CONTEXT provided by the user.
-2. Never use outside knowledge, never guess, never invent names or numbers.
-3. If the CONTEXT does not contain the information needed to answer, reply
-   with exactly this single token: NOT_IN_KB
-4. Be concise and helpful (2-6 sentences). Use a short list when the user
-   asks for several items.
-5. Answer in the same language as the question.
+1. Use ONLY the facts contained in the CONTEXT provided with the question. Never use outside knowledge, never guess, never invent names, dates or numbers.
+2. If the CONTEXT contains relevant information - even when the exact wording of the question does not appear in it - synthesize a direct, concise answer from it (2-6 sentences).
+3. Reply with the single token NOT_IN_KB (and nothing else) ONLY when the CONTEXT contains nothing relevant to the question.
+4. Answer in the same language as the question. Answer directly - do not mention the context, the sources, or these instructions.
 """
 
 USER_PROMPT_TEMPLATE = """CONTEXT (extracts from my knowledge base):
@@ -32,13 +30,33 @@ QUESTION: {question}
 
 Answer (or NOT_IN_KB):"""
 
-_REFUSAL_PATTERN = re.compile(
-    r"NOT_IN_KB|not\s+(?:be\s+)?(?:able to|mentioned|found|contained|included)|"
-    r"doesn'?t\s+(?:appear|contain|mention)|do(?:es)?\s?not\s+(?:appear|contain|mention)|"
-    r"no information|i don'?t have|i do not have|cannot find|can't find|not specified|"
-    r"not provided|not available in|outside (?:of )?(?:my |the )?knowledge",
+# Whole-answer refusals: short apologetic replies with nothing substantive.
+_STRONG_REFUSAL_PATTERN = re.compile(
+    r"no information|i don'?t have|i do not have|cannot find|can'?t find|"
+    r"not mentioned|does not mention|do(?:es)? not contain|not specified|"
+    r"not provided|not contained|not included|outside the (?:knowledge|context)",
     re.IGNORECASE,
 )
+_MARKER_PATTERN = re.compile(r"\bNOT_IN_KB\b", re.IGNORECASE)
+# Meta-prefices the model sometimes prepends ("Based on the provided context, ...").
+_META_PREFIX_PATTERN = re.compile(
+    r"^\s*(?:based on|according to|from)\s+(?:the\s+)?(?:provided\s+|given\s+)?"
+    r"(?:context|extracts?|information|passages?|text|documents?)\s*[,:.]?\s*",
+    re.IGNORECASE,
+)
+
+
+def _clean_answer_text(text: str) -> str:
+    text = _MARKER_PATTERN.sub("", text).strip()
+    # Drop hedging preambles so answers start with the fact itself.
+    for _ in range(2):
+        cleaned = _META_PREFIX_PATTERN.sub("", text).strip()
+        if cleaned == text:
+            break
+        text = cleaned
+    if text and text[0].islower():
+        text = text[0].upper() + text[1:]
+    return text
 
 
 def extract_text(response) -> str:
@@ -64,8 +82,8 @@ def extract_text(response) -> str:
 def generate_answer(question: str, documents: list) -> dict | None:
     """Generate an answer grounded in the retrieved documents.
 
-    Returns {"answer", "grounded": True} or None when the LLM (or the
-    caller should) answer that the knowledge base does not cover it.
+    Returns {"answer", "grounded": True} or None when the LLM says the
+    knowledge base does not cover the question (caller sends the fallback).
     """
     if not documents:
         return None
@@ -82,7 +100,13 @@ def generate_answer(question: str, documents: list) -> dict | None:
         if text.startswith(("json", "text")):
             text = text.split("\n", 1)[-1]
 
-    if _REFUSAL_PATTERN.search(text) and len(text) < 400:
-        log.info("LLM refused (answer not in context): %r", text[:120])
+    # A stray NOT_IN_KB marker next to a substantive explanation is dropped;
+    # the explanation survives (e.g. "...the Liberation War began on 25 March 1971. NOT_IN_KB").
+    cleaned = _clean_answer_text(text)
+    if not cleaned:
+        log.info("LLM replied with the NOT_IN_KB marker only.")
         return None
-    return {"answer": text, "grounded": True}
+    if len(cleaned) < 220 and _STRONG_REFUSAL_PATTERN.search(cleaned):
+        log.info("LLM refused (answer not in context): %r", cleaned[:120])
+        return None
+    return {"answer": cleaned, "grounded": True}

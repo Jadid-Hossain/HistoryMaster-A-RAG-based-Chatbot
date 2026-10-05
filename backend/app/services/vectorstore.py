@@ -10,7 +10,7 @@ from ..config import CHROMA_DIR
 from ..logger import get_logger
 from .embeddings import embedder
 
-log = get_logger("knowbot.vectorstore")
+log = get_logger("historymaster.vectorstore")
 
 COLLECTION_NAME = "knowbot_knowledge_base"
 

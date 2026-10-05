@@ -13,7 +13,7 @@ from ..services import ingest
 from ..services.vectorstore import vector_store
 
 router = APIRouter()
-log = get_logger("knowbot.kb")
+log = get_logger("historymaster.kb")
 
 
 @router.post("/documents", summary="Upload one or more documents (PDF, TXT, MD, DOCX, HTML)")

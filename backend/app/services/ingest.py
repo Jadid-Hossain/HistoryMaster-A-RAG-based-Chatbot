@@ -18,7 +18,7 @@ from ..config import CHUNK_OVERLAP, CHUNK_SIZE, UPLOAD_DIR
 from ..logger import get_logger
 from .vectorstore import vector_store
 
-log = get_logger("knowbot.ingest")
+log = get_logger("historymaster.ingest")
 
 _splitter = RecursiveCharacterTextSplitter(
     chunk_size=CHUNK_SIZE,

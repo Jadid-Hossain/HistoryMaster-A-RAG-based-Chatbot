@@ -1,4 +1,4 @@
-/* ============ KnowBot design system (dark, demo-friendly) ============ */
+/* ============ History Master design system (dark, demo-friendly) ============ */
 :root {
   --bg: #0b1020;
   --bg-soft: #10172b;
@@ -315,3 +315,6 @@ input:focus { border-color: var(--accent); }
   .sidebar { width: 230px; min-width: 230px; }
   .bubble { max-width: 94%; }
 }
+
+.bubble-text strong { color: #fff; }
+.bubble-text code { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 13px; }

@@ -12,7 +12,7 @@ from ..config import (
 )
 from ..logger import get_logger
 
-log = get_logger("knowbot.embeddings")
+log = get_logger("historymaster.embeddings")
 
 
 class EmbeddingService:

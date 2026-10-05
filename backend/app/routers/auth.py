@@ -9,7 +9,7 @@ from ..logger import get_logger
 from ..security import create_access_token, get_current_user, hash_password, verify_password
 
 router = APIRouter()
-log = get_logger("knowbot.auth")
+log = get_logger("historymaster.auth")
 
 _USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9_.]{3,32}$")
 

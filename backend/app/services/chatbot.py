@@ -1,4 +1,4 @@
-"""KnowBot's brain: the RAG pipeline orchestrator.
+"""History Master's brain: the RAG pipeline orchestrator.
 
 Pipeline per question:
   1. small talk / capability questions -> canned answers (no LLM call)
@@ -18,7 +18,7 @@ from ..logger import get_logger
 from . import memory, rag
 from .vectorstore import vector_store
 
-log = get_logger("knowbot.chatbot")
+log = get_logger("historymaster.chatbot")
 
 _GREETING_PATTERN = re.compile(
     r"^\s*(hi+|hello+|hey+|good\s+(morning|afternoon|evening)|assalam(u|o)? ?alaikum|"
@@ -32,12 +32,12 @@ _CAPABILITY_PATTERN = re.compile(
 )
 
 _FALLBACK_TEMPLATES = [
-    "I'm sorry, but I couldn't find that information in my knowledge base. "
-    "Please try rephrasing the question, or ask me about one of the suggested topics.",
+    "I'm sorry, but I couldn't find that in my knowledge base about the history of Bangladesh. "
+    "Please try rephrasing the question, or ask about something covered in the book.",
     "That doesn't appear to be covered in my knowledge base yet. "
-    "I can only answer questions about the documents I was trained on - could you rephrase or pick another topic?",
+    "I can only answer questions about the history of Bangladesh from the book I've learned from - could you rephrase?",
     "I don't have enough information in my knowledge base to answer that reliably. "
-    "Try asking about a topic from the suggested questions.",
+    "Try asking about a topic from the book.",
 ]
 
 
@@ -61,9 +61,8 @@ def _canned_greeting(question: str) -> dict:
         answer = "Goodbye! Feel free to come back whenever you have a question about my knowledge base."
     else:
         answer = (
-            "Hello! I'm KnowBot, your knowledge-base assistant. "
-            "Ask me anything about the documents I've been trained on - "
-            "the suggested questions below are a good place to start."
+            "Hello! I'm History Master. Ask me anything about the history of "
+            "Bangladesh - I answer from the book in my knowledge base."
         )
     return {
         "answer": answer,
@@ -79,10 +78,10 @@ def _canned_capabilities() -> dict:
     topics = _doc_topics()
     topic_line = ", ".join(topics) if topics else "no documents yet"
     answer = (
-        "I'm KnowBot, a retrieval-augmented (RAG) chatbot. I answer questions strictly from my "
-        "knowledge base - when something is not in it, I tell you honestly instead of guessing. "
-        f"Current topics I know about: {topic_line}. "
-        "Admins can upload new documents any time; I pick them up instantly, no retraining needed."
+        "I'm History Master, a retrieval-augmented (RAG) chatbot. I answer questions strictly "
+        f"from my knowledge base: {topic_line}. When something is not in it, I tell you "
+        "honestly instead of guessing. Admins can upload new documents any time - "
+        "I pick them up instantly, no retraining needed."
     )
     return {
         "answer": answer,
@@ -137,6 +136,7 @@ def answer_question(question: str, history: list[dict] | None = None) -> dict:
 
     # 2. retrieval with memory-aware query rewriting ---------------------
     search_query = memory.build_search_query(question, history)
+    search_query = memory.augment_search_query(question, search_query)
     results = vector_store.search(search_query, RETRIEVAL_TOP_K)
     log.info(
         "Q: %r | search_query=%r | top_similarity=%s",

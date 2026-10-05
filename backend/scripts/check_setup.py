@@ -28,7 +28,7 @@ def main() -> int:
     failures = 0
 
     print("=" * 64)
-    print("KnowBot setup check")
+    print("History Master setup check")
     print("=" * 64)
 
     # 1. .env + API key ------------------------------------------------------

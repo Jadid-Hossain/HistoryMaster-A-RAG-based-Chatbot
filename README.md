@@ -1,4 +1,4 @@
-# 🤖 KnowBot — AI Knowledge-Base Chatbot (RAG)
+# History Master — AI Chatbot on the History of Bangladesh (RAG)
 
 A production-style **RAG (Retrieval-Augmented Generation) chatbot** that answers questions
 **strictly from a custom knowledge base** (your PDF / documents), politely refuses anything
@@ -166,7 +166,7 @@ API health. GitHub Actions runs the same suite on every push.
 ## 🗂 Project structure
 
 ```
-KnowBot/
+History Master/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py               # FastAPI app, lifespan, static frontend mount
