@@ -76,7 +76,8 @@ def main() -> None:
     else:
         kb_dir = BACKEND_DIR / "knowledge_base"
         files = sorted(
-            p for p in kb_dir.iterdir() if p.suffix.lower() in ALLOWED
+            p for p in kb_dir.iterdir()
+            if p.suffix.lower() in ALLOWED and not p.stem.upper().startswith("README")
         ) if kb_dir.exists() else []
 
     if not files:
