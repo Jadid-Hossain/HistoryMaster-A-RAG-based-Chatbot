@@ -2,6 +2,8 @@
 REM One-click demo: builds the frontend (if needed), starts the backend,
 REM which then serves the chat UI at http://localhost:8000
 cd /d "%~dp0"
+REM Embedding model is cached locally - skip the slow online check
+set HF_HUB_OFFLINE=1
 if not exist "frontend\dist" (
     echo Building frontend ...
     cd frontend && call npm install && call npm run build && cd ..
