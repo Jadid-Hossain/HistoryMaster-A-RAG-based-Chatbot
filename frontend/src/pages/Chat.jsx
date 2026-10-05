@@ -6,16 +6,31 @@ import {
 
 let nextTempId = -1
 
-// Minimal, safe markdown-ish rendering: **bold**, *italic*, `code`.
+// Shown when the backend does not provide KB-specific suggestions.
+const DEFAULT_SUGGESTIONS = [
+  'What is this book about?',
+  'When was Bangladesh liberated?',
+  'Summarize the main topics covered in the book',
+  'Who wrote this book?',
+]
+
+// Minimal, safe markdown-ish rendering: **bold**, *italic*, `code`, "- " bullets.
 function renderFormatted(text) {
   const escaped = String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
   return escaped
+    .replace(/^-\s+/gm, '• ')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
     .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+}
+
+function formatTime(iso) {
+  const d = iso ? new Date(iso) : new Date()
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function Chat({ user, onLogout }) {
@@ -27,13 +42,17 @@ export default function Chat({ user, onLogout }) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [suggestions, setSuggestions] = useState([])
+  const [copiedId, setCopiedId] = useState(null)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
     fetchSessions().then(setSessions).catch(() => {})
     fetchCapabilities()
-      .then((caps) => setSuggestions(caps.suggested_questions || []))
-      .catch(() => {})
+      .then((caps) => {
+        const fromKb = caps.suggested_questions || []
+        setSuggestions(fromKb.length ? fromKb : DEFAULT_SUGGESTIONS)
+      })
+      .catch(() => setSuggestions(DEFAULT_SUGGESTIONS))
   }, [])
 
   useEffect(() => {
@@ -74,7 +93,10 @@ export default function Chat({ user, onLogout }) {
     if (!text || sending) return
     setError('')
     setInput('')
-    setMessages((prev) => [...prev, { id: nextTempId++, role: 'user', content: text }])
+    setMessages((prev) => [
+      ...prev,
+      { id: nextTempId++, role: 'user', content: text, created_at: new Date().toISOString() },
+    ])
     setSending(true)
     try {
       const reply = await ask(text, activeSession)
@@ -88,6 +110,7 @@ export default function Chat({ user, onLogout }) {
           confidence: reply.confidence,
           in_scope: reply.in_scope,
           latency_ms: reply.latency_ms,
+          created_at: new Date().toISOString(),
         },
       ])
       setActiveSession(reply.session_id)
@@ -105,6 +128,16 @@ export default function Chat({ user, onLogout }) {
     }
   }
 
+  async function copyAnswer(message) {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setCopiedId(message.id)
+      setTimeout(() => setCopiedId(null), 1600)
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
   function logout() {
     clearSession()
     onLogout()
@@ -115,9 +148,8 @@ export default function Chat({ user, onLogout }) {
       {/* ---------------------------------------------------- sidebar -- */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div>
-            <strong>History Master</strong>
-          </div>
+          <strong>History Master</strong>
+          <small>History of Bangladesh, on demand</small>
         </div>
 
         <button className="btn primary full" onClick={newChat}>＋ New Chat</button>
@@ -162,6 +194,7 @@ export default function Chat({ user, onLogout }) {
         <div className="messages" id="messages">
           {messages.length === 0 && !sending && (
             <div className="welcome">
+              <div className="welcome-icon">📖</div>
               <h3>Hi {user?.username}! Ask me anything about the history of Bangladesh.</h3>
               <p>I answer strictly from the book in my knowledge base — if something is not there, I'll tell you honestly.</p>
               <div className="suggestion-grid">
@@ -177,7 +210,12 @@ export default function Chat({ user, onLogout }) {
           {messages.map((m) =>
             m.role === 'user' ? (
               <div key={m.id} className="row user-row-msg">
-                <div className="bubble user">{m.content}</div>
+                <div className="bubble user">
+                  {m.content}
+                  <div className="bubble-meta" style={{ justifyContent: 'flex-end', marginTop: 4 }}>
+                    <span>{formatTime(m.created_at)}</span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div key={m.id} className="row bot-row-msg">
@@ -206,6 +244,16 @@ export default function Chat({ user, onLogout }) {
                     {m.confidence != null && <span>🎯 {(m.confidence * 100).toFixed(0)}% match</span>}
                     {m.latency_ms > 0 && <span>⚡ {(m.latency_ms / 1000).toFixed(1)}s</span>}
                     {m.in_scope === false && <span>🤔 out of knowledge base</span>}
+                    <span>{formatTime(m.created_at)}</span>
+                    <span className="msg-actions">
+                      <button
+                        className="copy-btn"
+                        title="Copy answer"
+                        onClick={() => copyAnswer(m)}
+                      >
+                        {copiedId === m.id ? '✓ Copied' : '⧉ Copy'}
+                      </button>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -216,7 +264,7 @@ export default function Chat({ user, onLogout }) {
             <div className="row bot-row-msg">
               <div className="bubble bot typing">
                 <span></span><span></span><span></span>
-                <em>&nbsp;searching the knowledge base…</em>
+                <em>&nbsp;searching the book…</em>
               </div>
             </div>
           )}

@@ -76,6 +76,8 @@ export const register = (username, password) =>
 
 export const fetchMe = () => request('/auth/me')
 
+export const fetchUsers = () => request('/auth/users')
+
 // ---------------------------------------------------------------- chat ----
 export const ask = (message, sessionId) =>
   request('/chat/ask', { method: 'POST', body: { message, session_id: sessionId } })
