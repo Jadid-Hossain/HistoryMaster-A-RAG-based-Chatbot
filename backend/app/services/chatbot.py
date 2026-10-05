@@ -32,12 +32,13 @@ _CAPABILITY_PATTERN = re.compile(
 )
 
 _FALLBACK_TEMPLATES = [
-    "I'm sorry, but I couldn't find that in my knowledge base about the history of Bangladesh. "
-    "Please try rephrasing the question, or ask about something covered in the book.",
+    "I'm sorry, but I couldn't find that in my knowledge base about the history of "
+    "Bangladesh. Please try to ask about something related to the history of Bangladesh.",
     "That doesn't appear to be covered in my knowledge base yet. "
-    "I can only answer questions about the history of Bangladesh from the book I've learned from - could you rephrase?",
+    "I can only answer questions about the history of Bangladesh from the book I've learned from - "
+    "could you rephrase?",
     "I don't have enough information in my knowledge base to answer that reliably. "
-    "Try asking about a topic from the book.",
+    "Please ask me something about the history of Bangladesh.",
 ]
 
 

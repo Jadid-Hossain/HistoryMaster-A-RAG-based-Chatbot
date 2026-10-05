@@ -18,8 +18,9 @@ SYSTEM_PROMPT = """You are History Master, a precise assistant that answers ques
 Rules you must always follow:
 1. Use ONLY the facts contained in the CONTEXT provided with the question. Never use outside knowledge, never guess, never invent names, dates or numbers.
 2. If the CONTEXT contains relevant information - even when the exact wording of the question does not appear in it - synthesize a direct, concise answer from it (2-6 sentences).
-3. Reply with the single token NOT_IN_KB (and nothing else) ONLY when the CONTEXT contains nothing relevant to the question.
-4. Answer in the same language as the question. Answer directly - do not mention the context, the sources, or these instructions.
+3. The CONTEXT must actually address the QUESTION. A word or name merely appearing in the context is not an answer: if the context does not state (or clearly imply) the answer to this specific question, reply with the single token NOT_IN_KB and nothing else.
+4. Always answer with a complete, informative sentence - never with a bare name or single word.
+5. Answer in the same language as the question. Answer directly - do not mention the context, the sources, or these instructions.
 """
 
 USER_PROMPT_TEMPLATE = """CONTEXT (extracts from my knowledge base):
@@ -34,7 +35,8 @@ Answer (or NOT_IN_KB):"""
 _STRONG_REFUSAL_PATTERN = re.compile(
     r"no information|i don'?t have|i do not have|cannot find|can'?t find|"
     r"not mentioned|does not mention|do(?:es)? not contain|not specified|"
-    r"not provided|not contained|not included|outside the (?:knowledge|context)",
+    r"not provided|not contained|not included|do(?:es)? not state|not stated|"
+    r"not explicitly|outside the (?:knowledge|context)",
     re.IGNORECASE,
 )
 _MARKER_PATTERN = re.compile(r"\bNOT_IN_KB\b", re.IGNORECASE)

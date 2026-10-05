@@ -68,7 +68,7 @@ GEMINI_EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "models/text-embedd
 
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))         # characters per chunk
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 150))    # character overlap
-RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", 12))
+RETRIEVAL_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", 20))
 
 # Cheap pre-filter only: below this cosine similarity the bot skips the LLM and
 # answers "not in my knowledge base" directly. The precise guard is the LLM's
