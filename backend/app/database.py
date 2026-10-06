@@ -29,15 +29,6 @@ CREATE TABLE IF NOT EXISTS documents (
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS chunks (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    doc_id      INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    chunk_index INTEGER NOT NULL,
-    text        TEXT NOT NULL,
-    vector      BLOB NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id);
-
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
