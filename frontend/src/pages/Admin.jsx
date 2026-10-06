@@ -63,7 +63,9 @@ export default function Admin({ user, onLogout }) {
   }
 
   function onFilesSelected(event) {
-    const files = event.target.files
+    // Copy to a real array FIRST: clearing input.value empties the live
+    // FileList, which silently skipped the whole upload.
+    const files = Array.from(event.target.files || [])
     event.target.value = ''
     handleFiles(files)
   }
